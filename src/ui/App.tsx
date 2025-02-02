@@ -13,7 +13,7 @@ function App() {
 
   return (
     <div>
-      <h1>HAHA</h1>
+      <h1 className="text-sm">HAHA</h1>
       <button onClick={handleToggleServer}>{serverStatus}</button>
     </div>
   );
