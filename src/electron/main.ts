@@ -61,15 +61,22 @@ ipcMain.handle("get-devices", async () => {
   devices = [];
 
   await new Promise<void>((resolve) => {
-    bonjourService.find({ type: "filetransfer" }, (service) => {
+    const browser = bonjourService.find({ type: "filetransfer" });
+
+    browser.on("up", (service) => {
+      console.log("Discovered device:", service);
       devices.push({
-        name: service.host,
+        name: service.name || service.host,
         address: service.referer.address,
         bonjourPort: service.port,
         expressPort: expressPort,
       });
-      resolve();
     });
+
+    setTimeout(() => {
+      browser.stop();
+      resolve();
+    }, 2000);
   });
 
   return devices;
