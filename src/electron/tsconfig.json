@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["./definitions.d.ts"],
     "strict": true,
     "target": "ESNext",
     "module": "NodeNext",

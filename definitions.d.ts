@@ -1,6 +1,15 @@
+interface Device {
+  name: string;
+  address: string;
+  bonjourPort: number;
+  expressPort: number;
+}
+
 interface Window {
   electron: {
-    toggleServer: () => void;
+    startServer: () => void;
+    stopServer: () => void;
     getServerStatus: () => Promise<boolean>;
+    getDevices: () => Promise<Device[]>;
   };
 }

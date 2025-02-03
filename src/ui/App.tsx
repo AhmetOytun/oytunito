@@ -1,21 +1,15 @@
-import { useState } from "react";
+import { Routes, Route } from "react-router-dom";
+import HomePage from "./pages/page";
+import SendPage from "./pages/send/page";
+import ReceivePage from "./pages/receive/page";
 
 function App() {
-  const [serverStatus, setServerStatus] = useState("Server is not running");
-
-  const handleToggleServer = () => {
-    window.electron.toggleServer();
-
-    window.electron.getServerStatus().then((status) => {
-      setServerStatus(status ? "Server is running" : "Server is not running");
-    });
-  };
-
   return (
-    <div>
-      <h1 className="text-sm">HAHA</h1>
-      <button onClick={handleToggleServer}>{serverStatus}</button>
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/send" element={<SendPage />} />
+      <Route path="/receive" element={<ReceivePage />} />
+    </Routes>
   );
 }
 
