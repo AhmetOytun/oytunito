@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld("electron", {
   startServer: () => ipcRenderer.send("server-start"),
   stopServer: () => ipcRenderer.send("server-stop"),
   getDevices: () => ipcRenderer.invoke("get-devices"),
+  startPublishing: () => ipcRenderer.send("start-publishing"),
+  stopPublishing: () => ipcRenderer.send("stop-publishing"),
 });

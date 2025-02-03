@@ -11,5 +11,7 @@ interface Window {
     stopServer: () => void;
     getServerStatus: () => Promise<boolean>;
     getDevices: () => Promise<Device[]>;
+    startPublishing: () => void;
+    stopPublishing: () => void;
   };
 }

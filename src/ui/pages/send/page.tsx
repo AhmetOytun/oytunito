@@ -14,6 +14,56 @@ function SendPage() {
     });
   };
 
+  const handleUpload = async () => {
+    try {
+      if (!file) {
+        console.error("No movie file selected");
+        return;
+      }
+      const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(file.size, start + CHUNK_SIZE);
+        const chunk = file.slice(start, end);
+
+        const formData = new FormData();
+        formData.append("chunk", chunk);
+        formData.append("chunkIndex", i.toString());
+        formData.append("totalChunks", totalChunks.toString());
+        formData.append("originalname", file.name);
+
+        await fetch(
+          `http://${selectedDevice?.address}:${selectedDevice?.expressPort}/upload-chunk`,
+          {
+            headers: {
+              "X-File-Name": file.name,
+            },
+            method: "POST",
+            body: formData,
+          }
+        );
+      }
+
+      await fetch(
+        `http://${selectedDevice?.address}:${selectedDevice?.expressPort}/merge-chunks`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-File-Name": file.name,
+          },
+          body: JSON.stringify({ originalname: file.name, totalChunks }),
+        }
+      );
+
+      alert("movieFile uploaded and merged successfully!");
+    } catch (e) {
+      console.error("Error uploading image:", e);
+    }
+  };
+
   useEffect(() => {
     getDevices();
     const interval = setInterval(() => {
@@ -30,7 +80,7 @@ function SendPage() {
         style={{ filter: "invert(1)" }}
         onClick={() => navigate("/")}
       />
-      <h1 className="text-lg mb-2 mt-10">Device List</h1>
+      <h1 className="text-lg mb-2 mt-5">Device List</h1>
       <div className="w-80 h-64 border rounded-lg">
         {devices.map((device) => (
           <div key={device.name} className="flex items-center justify-center">
@@ -52,6 +102,24 @@ function SendPage() {
             </p>
           </div>
         ))}
+      </div>
+      <div className="flex items-center gap-x-5">
+        <label className="mt-4 rounded-lg bg-slate-700 border p-2 w-28 text-white text-center cursor-pointer inline-block">
+          Select File
+          <input
+            type="file"
+            className="hidden"
+            onChange={(e) => {
+              setFile(e.target.files?.[0] || null);
+            }}
+          />
+        </label>
+        <button
+          className="mt-4 rounded-lg bg-slate-700 border p-2 w-28 cursor-pointer"
+          onClick={handleUpload}
+        >
+          Send file
+        </button>
       </div>
     </div>
   );

@@ -1,16 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import backButton from "../../assets/back-button.svg";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 function ReceivePage() {
   const navigate = useNavigate();
 
-  const handleStartServer = () => {
-    window.electron.startServer();
-  };
-
   useEffect(() => {
-    handleStartServer();
+    window.electron.startServer();
+    window.electron.startPublishing();
+
+    return () => {
+      window.electron.stopServer();
+      window.electron.stopPublishing();
+    };
   }, []);
 
   return (

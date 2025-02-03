@@ -4,9 +4,16 @@ import { isDev } from "./util.js";
 import { getPreloadPath } from "./pathresolver.js";
 import express from "express";
 import bonjour from "bonjour";
+import os from "os";
+import router from "./router.js";
+import cors from "cors";
 
 let bonjourService = bonjour();
 let expressApp = express();
+
+expressApp.use(cors());
+expressApp.use(express.json());
+expressApp.use(router);
 
 let isServerRunning = false;
 let server: import("http").Server | null = null;
@@ -23,12 +30,6 @@ app.on("ready", () => {
     webPreferences: {
       preload: getPreloadPath(),
     },
-  });
-
-  bonjourService.publish({
-    name: "oytunito",
-    type: "filetransfer",
-    port: 3132,
   });
 
   if (isDev()) {
@@ -57,6 +58,18 @@ ipcMain.handle("server-status", () => {
   return isServerRunning;
 });
 
+ipcMain.on("start-publishing", () => {
+  bonjourService.publish({
+    name: os.hostname(),
+    type: "filetransfer",
+    port: 3132,
+  });
+});
+
+ipcMain.on("stop-publishing", () => {
+  bonjourService.unpublishAll(() => {});
+});
+
 ipcMain.handle("get-devices", async () => {
   devices = [];
 
@@ -64,7 +77,6 @@ ipcMain.handle("get-devices", async () => {
     const browser = bonjourService.find({ type: "filetransfer" });
 
     browser.on("up", (service) => {
-      console.log("Discovered device:", service);
       devices.push({
         name: service.name || service.host,
         address: service.referer.address,
