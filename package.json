@@ -1,9 +1,16 @@
 {
-  "name": "oytunito",
+  "name": "oytunito.",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
+  "author": {
+    "name": "Ahmet Oytun Kurtuldu",
+    "email": "ahmetoytunkurtuldu@gmail.com",
+    "url": "https://github.com/AhmetOytun"
+  },
+  "description": "Oytunito is a simple desktop application that allows you to share files between devices on the same network.",
+  "license": "MIT",
   "scripts": {
     "dev": "npm-run-all --parallel dev:react dev:electron",
     "dev:react": "vite",

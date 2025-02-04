@@ -30,6 +30,13 @@ app.on("ready", () => {
     webPreferences: {
       preload: getPreloadPath(),
     },
+    autoHideMenuBar: true,
+    backgroundColor: "#1d293d",
+    show: false,
+  });
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow!.show();
   });
 
   if (isDev()) {
