@@ -5,7 +5,7 @@ import { getPreloadPath } from "./pathresolver.js";
 import express from "express";
 import bonjour from "bonjour";
 import os from "os";
-import router from "./router.js";
+import router, { progress, isDownloading } from "./router.js";
 import cors from "cors";
 
 let bonjourService = bonjour();
@@ -68,6 +68,14 @@ ipcMain.on("start-publishing", () => {
 
 ipcMain.on("stop-publishing", () => {
   bonjourService.unpublishAll(() => {});
+});
+
+ipcMain.handle("download-progress", () => {
+  if (isDownloading) {
+    return progress;
+  }
+
+  return null;
 });
 
 ipcMain.handle("get-devices", async () => {

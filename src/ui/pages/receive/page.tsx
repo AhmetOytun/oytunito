@@ -1,13 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import backButton from "../../assets/back-button.svg";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function ReceivePage() {
   const navigate = useNavigate();
+  const [progress, setProgress] = useState<number | null>(null);
 
   useEffect(() => {
     window.electron.startServer();
     window.electron.startPublishing();
+
+    setInterval(async () => {
+      const progress = await window.electron.downloadProgress();
+      setProgress(progress);
+    }, 100);
 
     return () => {
       window.electron.stopServer();
@@ -25,7 +31,9 @@ function ReceivePage() {
           navigate("/");
         }}
       />
-      <h1>Waiting for a file...</h1>
+      <h1>
+        {progress !== null ? `Progress: ${progress}%` : "Waiting for a file..."}
+      </h1>
     </div>
   );
 }

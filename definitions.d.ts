@@ -13,5 +13,6 @@ interface Window {
     getDevices: () => Promise<Device[]>;
     startPublishing: () => void;
     stopPublishing: () => void;
+    downloadProgress: () => Promise<number | null>;
   };
 }

@@ -14,11 +14,12 @@ fs.ensureDirSync(FILES_DIR);
 const upload = multer({ dest: CHUNKS_DIR });
 const router = Router();
 
-router.get("/", (req, res) => {
-  res.send("Hello World");
-});
+export let isDownloading: boolean = false;
+export let progress: number = 0;
 
 router.post("/upload-chunk", upload.single("chunk"), async (req, res) => {
+  isDownloading = true;
+
   const fileName = req.header("X-File-Name");
   const { chunkIndex } = req.body;
 
@@ -29,6 +30,11 @@ router.post("/upload-chunk", upload.single("chunk"), async (req, res) => {
 
   if (req.file) {
     await fs.move(req.file.path, chunkFilePath);
+
+    progress = Math.ceil(
+      ((parseInt(chunkIndex) + 1) / parseInt(req.body.totalChunks)) * 100
+    );
+
     res.status(200).send({ message: "Chunk uploaded successfully" });
   } else {
     res.status(400).send({ message: "File not uploaded" });
@@ -53,6 +59,9 @@ router.post("/merge-chunks", async (req, res) => {
   writeStream.end();
 
   await fs.remove(fileChunksDir);
+
+  isDownloading = false;
+  progress = 0;
 
   res
     .status(200)

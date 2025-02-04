@@ -7,6 +7,7 @@ function SendPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState<number>(0); // New state for progress
 
   const getDevices = async () => {
     window.electron.getDevices().then((devices) => {
@@ -16,11 +17,11 @@ function SendPage() {
 
   const handleUpload = async () => {
     try {
-      if (!file) {
-        console.error("No movie file selected");
+      if (!file || !selectedDevice) {
+        console.error("No movie file selected or no device chosen");
         return;
       }
-      const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
+      const CHUNK_SIZE = 10 * 1024 * 1024;
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
       for (let i = 0; i < totalChunks; i++) {
@@ -35,19 +36,19 @@ function SendPage() {
         formData.append("originalname", file.name);
 
         await fetch(
-          `http://${selectedDevice?.address}:${selectedDevice?.expressPort}/upload-chunk`,
+          `http://${selectedDevice.address}:${selectedDevice.expressPort}/upload-chunk`,
           {
-            headers: {
-              "X-File-Name": file.name,
-            },
+            headers: { "X-File-Name": file.name },
             method: "POST",
             body: formData,
           }
         );
+
+        setProgress(((i + 1) / totalChunks) * 100);
       }
 
       await fetch(
-        `http://${selectedDevice?.address}:${selectedDevice?.expressPort}/merge-chunks`,
+        `http://${selectedDevice.address}:${selectedDevice.expressPort}/merge-chunks`,
         {
           method: "POST",
           headers: {
@@ -58,9 +59,10 @@ function SendPage() {
         }
       );
 
-      alert("movieFile uploaded and merged successfully!");
+      alert("Movie file uploaded and merged successfully!");
+      setProgress(0);
     } catch (e) {
-      console.error("Error uploading image:", e);
+      console.error("Error uploading file:", e);
     }
   };
 
@@ -80,7 +82,7 @@ function SendPage() {
         style={{ filter: "invert(1)" }}
         onClick={() => navigate("/")}
       />
-      <h1 className="text-lg mb-2 mt-5">Device List</h1>
+      <h1 className="text-lg mb-2 mt-4">Device List</h1>
       <div className="w-80 h-64 border rounded-lg">
         {devices.map((device) => (
           <div key={device.name} className="flex items-center justify-center">
@@ -90,13 +92,11 @@ function SendPage() {
                   ? "bg-slate-700"
                   : "bg-slate-800"
               } hover:bg-slate-700 hover:cursor-pointer`}
-              onClick={() => {
-                if (selectedDevice?.name === device.name) {
-                  setSelectedDevice(null);
-                } else {
-                  setSelectedDevice(device);
-                }
-              }}
+              onClick={() =>
+                setSelectedDevice(
+                  selectedDevice?.name === device.name ? null : device
+                )
+              }
             >
               {device.name}
             </p>
@@ -109,9 +109,7 @@ function SendPage() {
           <input
             type="file"
             className="hidden"
-            onChange={(e) => {
-              setFile(e.target.files?.[0] || null);
-            }}
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
         </label>
         <button
@@ -121,6 +119,18 @@ function SendPage() {
           Send file
         </button>
       </div>
+
+      {progress > 0 && (
+        <div className="w-80 mt-2 bg-gray-700 rounded-lg h-4">
+          <div
+            className="bg-green-500 h-4 rounded-lg transition-all"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      )}
+      {progress > 0 && (
+        <p className="mt-1 text-sm">{Math.round(progress)}% Uploaded</p>
+      )}
     </div>
   );
 }

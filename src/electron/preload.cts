@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld("electron", {
   getDevices: () => ipcRenderer.invoke("get-devices"),
   startPublishing: () => ipcRenderer.send("start-publishing"),
   stopPublishing: () => ipcRenderer.send("stop-publishing"),
+  downloadProgress: () => ipcRenderer.invoke("download-progress"),
 });
