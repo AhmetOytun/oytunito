@@ -122,7 +122,7 @@ function SendPage() {
         <button
           className={`rounded-lg px-4 py-2 transition-all ${
             file && selectedDevice
-              ? "bg-green-600 hover:bg-green-500 active:bg-green-400"
+              ? "bg-green-600 hover:bg-green-500 active:bg-green-400 cursor-pointer"
               : "bg-slate-700 border border-slate-600 hover:bg-slate-600 active:bg-slate-500 cursor-not-allowed"
           }`}
           onClick={handleUpload}

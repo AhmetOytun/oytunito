@@ -3,12 +3,12 @@ import path from "path";
 import { isDev } from "./util.js";
 import { getPreloadPath } from "./pathresolver.js";
 import express from "express";
-import bonjour from "bonjour";
+import Bonjour from "bonjour";
 import os from "os";
 import router, { progress, isDownloading } from "./router.js";
 import cors from "cors";
 
-let bonjourService = bonjour();
+let bonjourService: Bonjour.Bonjour | null = null;
 let expressApp = express();
 
 expressApp.use(cors());
@@ -17,7 +17,7 @@ expressApp.use(router);
 
 let isServerRunning = false;
 let server: import("http").Server | null = null;
-let mainWindow = null;
+let mainWindow: BrowserWindow | null = null;
 
 const expressPort = 3131;
 let devices: Device[] = [];
@@ -66,22 +66,32 @@ ipcMain.handle("server-status", () => {
 });
 
 ipcMain.on("start-publishing", () => {
-  bonjourService.publish({
-    name: os.hostname(),
-    type: "filetransfer",
-    port: 3132,
+  if (!bonjourService) {
+    bonjourService = Bonjour();
+  }
+
+  bonjourService.unpublishAll(() => {
+    bonjourService!.publish({
+      name: os.hostname(),
+      type: "filetransfer",
+      port: 3132,
+    });
   });
 });
 
 ipcMain.on("stop-publishing", () => {
-  bonjourService.unpublishAll(() => {});
+  if (bonjourService) {
+    bonjourService.unpublishAll(() => {
+      bonjourService?.destroy();
+      bonjourService = null;
+    });
+  }
 });
 
 ipcMain.handle("download-progress", () => {
   if (isDownloading) {
     return progress;
   }
-
   return null;
 });
 
@@ -89,6 +99,10 @@ ipcMain.handle("get-devices", async () => {
   devices = [];
 
   await new Promise<void>((resolve) => {
+    if (!bonjourService) {
+      bonjourService = Bonjour();
+    }
+
     const browser = bonjourService.find({ type: "filetransfer" });
 
     browser.on("up", (service) => {

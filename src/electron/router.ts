@@ -18,54 +18,68 @@ export let isDownloading: boolean = false;
 export let progress: number = 0;
 
 router.post("/upload-chunk", upload.single("chunk"), async (req, res) => {
-  isDownloading = true;
+  try {
+    isDownloading = true;
 
-  const fileName = req.header("X-File-Name");
-  const { chunkIndex } = req.body;
+    const fileName = req.header("X-File-Name");
+    const { chunkIndex } = req.body;
 
-  const fileChunksDir = path.join(CHUNKS_DIR, fileName || "");
-  await fs.ensureDir(fileChunksDir);
+    const fileChunksDir = path.join(CHUNKS_DIR, fileName || "");
+    await fs.ensureDir(fileChunksDir);
 
-  const chunkFilePath = path.join(fileChunksDir, `${chunkIndex}`);
+    const chunkFilePath = path.join(fileChunksDir, `${chunkIndex}`);
 
-  if (req.file) {
-    await fs.move(req.file.path, chunkFilePath);
+    if (req.file) {
+      await fs.move(req.file.path, chunkFilePath);
 
-    progress = Math.ceil(
-      ((parseInt(chunkIndex) + 1) / parseInt(req.body.totalChunks)) * 100
-    );
+      progress = Math.ceil(
+        ((parseInt(chunkIndex) + 1) / parseInt(req.body.totalChunks)) * 100
+      );
 
-    res.status(200).send({ message: "Chunk uploaded successfully" });
-  } else {
+      res.status(200).send({ message: "Chunk uploaded successfully" });
+    } else {
+      res.status(400).send({ message: "File not uploaded" });
+    }
+  } catch (err) {
+    console.log(err);
     res.status(400).send({ message: "File not uploaded" });
   }
 });
 
 router.post("/merge-chunks", async (req, res) => {
-  const { totalChunks } = req.body;
-  const fileName = req.header("X-File-Name");
+  try {
+    const { totalChunks } = req.body;
+    const fileName = req.header("X-File-Name");
 
-  const fileChunksDir = path.join(CHUNKS_DIR, fileName || "");
-  const outputPath = path.join(FILES_DIR, fileName || "");
+    const fileChunksDir = path.join(CHUNKS_DIR, fileName || "");
+    const outputPath = path.join(FILES_DIR, fileName || "");
 
-  const writeStream = fs.createWriteStream(outputPath);
+    const writeStream = fs.createWriteStream(outputPath);
 
-  for (let i = 0; i < totalChunks; i++) {
-    const chunkPath = path.join(fileChunksDir, `${i}`);
-    const data = await fs.readFile(chunkPath);
-    writeStream.write(data);
+    for (let i = 0; i < totalChunks; i++) {
+      const chunkPath = path.join(fileChunksDir, `${i}`);
+      await new Promise<void>((resolve, reject) => {
+        const readStream = fs.createReadStream(chunkPath);
+        readStream.pipe(writeStream, { end: false });
+        readStream.on("end", () => resolve());
+        readStream.on("error", reject);
+      });
+    }
+
+    await new Promise((resolve) => writeStream.end(resolve));
+
+    await fs.remove(fileChunksDir);
+
+    isDownloading = false;
+    progress = 0;
+
+    res
+      .status(200)
+      .send({ message: "File merged successfully", path: outputPath });
+  } catch (err) {
+    console.log(err);
+    res.status(400).send({ message: "File not merged" });
   }
-
-  writeStream.end();
-
-  await fs.remove(fileChunksDir);
-
-  isDownloading = false;
-  progress = 0;
-
-  res
-    .status(200)
-    .send({ message: "File merged successfully", path: outputPath });
 });
 
 export default router;
