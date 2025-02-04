@@ -35,15 +35,15 @@ app.on("ready", () => {
     show: false,
   });
 
-  mainWindow.once("ready-to-show", () => {
-    mainWindow!.show();
-  });
-
   if (isDev()) {
     mainWindow.loadURL("http://localhost:5123");
   } else {
     mainWindow.loadFile(path.join(app.getAppPath(), "/dist-react/index.html"));
   }
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow!.show();
+  });
 });
 
 ipcMain.on("server-start", () => {

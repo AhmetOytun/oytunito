@@ -13,7 +13,7 @@ function ReceivePage() {
     const interval = setInterval(async () => {
       const progress = await window.electron.downloadProgress();
       setProgress(progress);
-    }, 100);
+    }, 1000);
 
     return () => {
       clearInterval(interval);
