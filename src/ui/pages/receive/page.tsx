@@ -10,6 +10,10 @@ function ReceivePage() {
     window.electron.startServer();
     window.electron.startPublishing();
 
+    window.electron.onDownloadFinish((fileName: string) => {
+      alert(`File received successfully: ${fileName}`);
+    });
+
     const interval = setInterval(async () => {
       const progress = await window.electron.downloadProgress();
       setProgress(progress);

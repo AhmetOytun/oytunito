@@ -17,7 +17,7 @@ expressApp.use(router);
 
 let isServerRunning = false;
 let server: import("http").Server | null = null;
-let mainWindow: BrowserWindow | null = null;
+export let mainWindow: BrowserWindow | null = null;
 
 const expressPort = 3131;
 let devices: Device[] = [];

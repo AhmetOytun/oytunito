@@ -9,4 +9,12 @@ contextBridge.exposeInMainWorld("electron", {
   startPublishing: () => ipcRenderer.send("start-publishing"),
   stopPublishing: () => ipcRenderer.send("stop-publishing"),
   downloadProgress: () => ipcRenderer.invoke("download-progress"),
+  onDownloadFinish: (callback: (fileName: string) => void) => {
+    ipcRenderer.on(
+      "download-finished",
+      (_: Electron.IpcRendererEvent, fileName: string) => {
+        callback(fileName);
+      }
+    );
+  },
 });

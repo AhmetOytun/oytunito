@@ -3,6 +3,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs-extra";
 import os from "os";
+import { BrowserWindow } from "electron";
+import { mainWindow } from "./main.js";
 
 const DESKTOP_DIR = path.join(os.homedir(), "Desktop", "oytunito_uploads");
 const CHUNKS_DIR = path.join(DESKTOP_DIR, "chunks");
@@ -16,6 +18,11 @@ const router = Router();
 
 export let isDownloading: boolean = false;
 export let progress: number = 0;
+
+function onDownloadFinish(fileName: string) {
+  if (!mainWindow) return;
+  mainWindow.webContents.send("download-finished", fileName);
+}
 
 router.post("/upload-chunk", upload.single("chunk"), async (req, res) => {
   try {
@@ -72,6 +79,8 @@ router.post("/merge-chunks", async (req, res) => {
 
     isDownloading = false;
     progress = 0;
+
+    onDownloadFinish(fileName || "");
 
     res
       .status(200)

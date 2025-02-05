@@ -14,5 +14,6 @@ interface Window {
     startPublishing: () => void;
     stopPublishing: () => void;
     downloadProgress: () => Promise<number | null>;
+    onDownloadFinish: (callback: (fileName: string) => void) => void;
   };
 }
