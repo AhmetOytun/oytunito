@@ -1,50 +1,84 @@
-# React + TypeScript + Vite
+# oytunito - File Transfer App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+oytunito is a simple and efficient file transfer application that allows seamless sharing of files between devices.
 
-Currently, two official plugins are available:
+![image](https://raw.githubusercontent.com/AhmetOytun/oytunito/refs/heads/main/screenshots/1.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## Expanding the ESLint configuration
+- Fast and secure file transfers
+- Easy-to-use interface
+- Cross-platform support (macOS & Windows)
+- No internet connection required for local transfers
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 📚 Usage
 
-- Configure the top-level `parserOptions` property like this:
+1. **Open oytunito** on both the sender and receiver devices.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+2. **Receiving a file:**
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+   - Click **Receive** and wait for a file.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+   ![image](https://raw.githubusercontent.com/AhmetOytun/oytunito/refs/heads/main/screenshots/2.png)
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+3. **Sending a file:**
+
+   - Click **Send** and wait for a receiver device to appear.
+   - Select the file and the target device.
+   - Click **Send** to start the transfer.
+
+   ![image](https://raw.githubusercontent.com/AhmetOytun/oytunito/refs/heads/main/screenshots/3.png)
+
+4. **Receiving the file:**
+
+   - The received file will be saved in:
+     ```
+     Desktop/oytunito_uploads/files/(filename)
+     ```
+
+5. **That's it!** Your file transfer is complete. 🎉
+
+---
+
+## 🔧 Building oytunito from Source
+
+If you'd like to build oytunito yourself, follow these steps:
+
+1. Clone the repository:
+
+   ```sh
+   git clone https://github.com/AhmetOytun/oytunito
+   ```
+
+2. Navigate to the project folder:
+
+   ```sh
+   cd oytunito
+   ```
+
+3. Install dependencies:
+
+   ```sh
+   npm install
+   ```
+
+4. Build the application:
+
+   - **For macOS (ARM64)**:
+     ```sh
+     npm run dist:mac
+     ```
+   - **For Windows (64-bit)**:
+     ```sh
+     npm run dist:win
+     ```
+   - **For Linux (64-bit)**:
+     ```sh
+     npm run dist:linux
+     ```
+
+5. Once the build is complete, your executable will be available in the `dist` folder.
+
+---
+
+Enjoy seamless file transfers with oytunito! 🚀
