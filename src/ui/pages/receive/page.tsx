@@ -10,9 +10,11 @@ function ReceivePage() {
     window.electron.startServer();
     window.electron.startPublishing();
 
-    window.electron.onDownloadFinish((fileName: string) => {
+    const handleDownloadFinish = (fileName: string) => {
       alert(`File received successfully: ${fileName}`);
-    });
+    };
+
+    window.electron.onDownloadFinish(handleDownloadFinish);
 
     const interval = setInterval(async () => {
       const progress = await window.electron.downloadProgress();
@@ -23,6 +25,7 @@ function ReceivePage() {
       clearInterval(interval);
       window.electron.stopServer();
       window.electron.stopPublishing();
+      window.electron.offDownloadFinish();
     };
   }, []);
 

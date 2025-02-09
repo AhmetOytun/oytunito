@@ -10,11 +10,15 @@ contextBridge.exposeInMainWorld("electron", {
   stopPublishing: () => ipcRenderer.send("stop-publishing"),
   downloadProgress: () => ipcRenderer.invoke("download-progress"),
   onDownloadFinish: (callback: (fileName: string) => void) => {
+    ipcRenderer.removeAllListeners("download-finished");
     ipcRenderer.on(
       "download-finished",
       (_: Electron.IpcRendererEvent, fileName: string) => {
         callback(fileName);
       }
     );
+  },
+  offDownloadFinish: () => {
+    ipcRenderer.removeAllListeners("download-finished"); // Properly remove listeners
   },
 });
