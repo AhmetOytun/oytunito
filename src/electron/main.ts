@@ -9,7 +9,7 @@ import router, { progress, isDownloading } from "./router.js";
 import cors from "cors";
 
 let bonjourService: Bonjour.Bonjour | null = null;
-let expressApp = express();
+const expressApp = express();
 
 expressApp.use(cors());
 expressApp.use(express.json());
