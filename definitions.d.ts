@@ -16,6 +16,9 @@ interface Window {
     downloadProgress: () => Promise<number | null>;
     onDownloadFinish: (callback: (fileName: string) => void) => void;
     offDownloadFinish: () => void;
-    removeListener: (event: string, listener: any) => void;
+    removeListener: (
+      event: string,
+      listener: (...args: unknown[]) => void
+    ) => void;
   };
 }

@@ -3,7 +3,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs-extra";
 import os from "os";
-import { BrowserWindow, ipcRenderer } from "electron";
 import { mainWindow } from "./main.js";
 
 const DESKTOP_DIR = path.join(os.homedir(), "Desktop", "oytunito_uploads");
