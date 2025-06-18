@@ -43,7 +43,7 @@ app.on("ready", () => {
 ipcMain.on("start-discovery", () => {
   if (browser) return;
 
-  browser = bonjour.find({ type: "filetransfer" });
+  browser = bonjour.find({ type: "oytunito" });
 
   browser.on("up", (service) => {
     mainWindow?.webContents.send("device-found", {
@@ -73,7 +73,7 @@ ipcMain.handle("start-broadcast", () => {
   publishedService = bonjour.publish({
     port: 3132,
     name: `${os.hostname()}`,
-    type: "filetransfer",
+    type: "oytunito",
   });
   if (typeof publishedService?.start === "function") {
     publishedService.start();
