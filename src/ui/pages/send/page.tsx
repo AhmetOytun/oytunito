@@ -25,9 +25,25 @@ function SendPage() {
       setProgress(p);
     });
 
+    const ipv4 = selectedDevice.addresses.find((addr) =>
+      /^\d{1,3}(\.\d{1,3}){3}$/.test(addr)
+    );
+
+    if (!ipv4) {
+      window.electronApi.showMessageDialog({
+        title: "Error",
+        message: "No valid IPv4 address found for the selected device.",
+      });
+      removeListener();
+      setSending(false);
+      setProgress(null);
+      setFilePath(null);
+      return;
+    }
+
     try {
       await window.fileTransfer.sendFile({
-        ip: selectedDevice.addresses[0],
+        ip: ipv4,
         port: selectedDevice.port,
         filePath,
       });
