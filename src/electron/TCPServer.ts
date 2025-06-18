@@ -7,8 +7,6 @@ const FILE_RECEIVE_PORT = 3132;
 
 function startFileReceiver(eventSender: Electron.WebContents) {
   const server = net.createServer((socket) => {
-    console.log("Client connected:", socket.remoteAddress);
-
     let fileStream: fs.WriteStream | null = null;
     let receivedBytes = 0;
     let fileSize = 0;
@@ -27,7 +25,13 @@ function startFileReceiver(eventSender: Electron.WebContents) {
           const filename = path.basename(header.filename);
           fileSize = header.size;
 
-          const savePath = path.join(app.getPath("downloads"), filename);
+          const baseDir = path.join(app.getPath("documents"), "oytunito");
+
+          if (!fs.existsSync(baseDir)) {
+            fs.mkdirSync(baseDir, { recursive: true });
+          }
+
+          const savePath = path.join(baseDir, filename);
           fileStream = fs.createWriteStream(savePath);
 
           const remaining = headerBuffer.slice(delimiterIndex + 1);
@@ -35,7 +39,6 @@ function startFileReceiver(eventSender: Electron.WebContents) {
             fileStream.write(remaining);
             receivedBytes += remaining.length;
 
-            // Progress update
             eventSender.send(
               "receive-file-progress",
               (receivedBytes / fileSize) * 100
@@ -43,7 +46,6 @@ function startFileReceiver(eventSender: Electron.WebContents) {
           }
 
           headerParsed = true;
-          console.log(`Receiving file ${filename} (${fileSize} bytes)`);
         }
       } else {
         if (fileStream) {
@@ -57,7 +59,6 @@ function startFileReceiver(eventSender: Electron.WebContents) {
           );
 
           if (receivedBytes >= fileSize) {
-            console.log("File received fully");
             fileStream.end();
             socket.end();
             eventSender.send("receive-file-complete");
@@ -67,7 +68,6 @@ function startFileReceiver(eventSender: Electron.WebContents) {
     });
 
     socket.on("end", () => {
-      console.log("Client disconnected");
       if (fileStream && !fileStream.closed) fileStream.end();
     });
 
@@ -79,7 +79,7 @@ function startFileReceiver(eventSender: Electron.WebContents) {
   });
 
   server.listen(FILE_RECEIVE_PORT, () => {
-    console.log(`File receiver listening on port ${FILE_RECEIVE_PORT}`);
+    // server is listening
   });
 
   return server;
