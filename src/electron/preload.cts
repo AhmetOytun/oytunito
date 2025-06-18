@@ -1,24 +1,50 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("electron", {
-  toggleServer: () => ipcRenderer.send("server-toggle"),
-  getServerStatus: () => ipcRenderer.invoke("server-status"),
-  startServer: () => ipcRenderer.send("server-start"),
-  stopServer: () => ipcRenderer.send("server-stop"),
-  getDevices: () => ipcRenderer.invoke("get-devices"),
-  startPublishing: () => ipcRenderer.send("start-publishing"),
-  stopPublishing: () => ipcRenderer.send("stop-publishing"),
-  downloadProgress: () => ipcRenderer.invoke("download-progress"),
-  onDownloadFinish: (callback: (fileName: string) => void) => {
-    ipcRenderer.removeAllListeners("download-finished");
-    ipcRenderer.on(
-      "download-finished",
-      (_: Electron.IpcRendererEvent, fileName: string) => {
-        callback(fileName);
-      }
-    );
+interface Device {
+  name: string;
+  host: string;
+  port: number;
+  addresses: string[];
+  event?: "up" | "down"; // opsiyonel event eklendi istersen
+}
+
+interface DeviceDiscoveryAPI {
+  start: () => void;
+  stop: () => void;
+  onDeviceFound: (callback: (device: Device) => void) => () => void;
+  startBroadcast: () => Promise<void>;
+  stopBroadcast: () => Promise<void>;
+}
+
+interface FileTransferAPI {
+  startFileReceiver: () => Promise<void>;
+  stopFileReceiver: () => Promise<void>;
+  sendFile: (args: {
+    ip: string;
+    port: number;
+    filePath: string;
+  }) => Promise<void>;
+}
+
+contextBridge.exposeInMainWorld("deviceDiscovery", {
+  start: (): void => ipcRenderer.send("start-discovery"),
+  stop: (): void => ipcRenderer.send("stop-discovery"),
+  onDeviceFound: (callback: (device: Device) => void) => {
+    const listener = (_: any, device: Device) => callback(device);
+    ipcRenderer.on("device-found", listener);
+    return () => ipcRenderer.removeListener("device-found", listener);
   },
-  offDownloadFinish: () => {
-    ipcRenderer.removeAllListeners("download-finished"); // Properly remove listeners
-  },
+  startBroadcast: () => ipcRenderer.invoke("start-broadcast"),
+  stopBroadcast: () => ipcRenderer.invoke("stop-broadcast"),
+} as DeviceDiscoveryAPI);
+
+contextBridge.exposeInMainWorld("fileTransfer", {
+  startFileReceiver: () => ipcRenderer.invoke("start-file-receiver"),
+  stopFileReceiver: () => ipcRenderer.invoke("stop-file-receiver"),
+  sendFile: (args: { ip: string; port: number; filePath: string }) =>
+    ipcRenderer.invoke("send-file", args),
+} as FileTransferAPI);
+
+contextBridge.exposeInMainWorld("electronApi", {
+  openFileDialog: () => ipcRenderer.invoke("dialog:openFile"),
 });

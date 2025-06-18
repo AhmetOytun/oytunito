@@ -1,31 +1,19 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import backButton from "../../assets/back-button.svg";
+import { useEffect, useState } from "react";
 
 function ReceivePage() {
   const navigate = useNavigate();
-  const [progress, setProgress] = useState<number | null>(null);
+  const [progress] = useState<number | null>(null);
 
   useEffect(() => {
-    window.electron.startServer();
-    window.electron.startPublishing();
+    window.deviceDiscovery.startBroadcast();
 
-    const handleDownloadFinish = (fileName: string) => {
-      alert(`File received successfully: ${fileName}`);
-    };
-
-    window.electron.onDownloadFinish(handleDownloadFinish);
-
-    const interval = setInterval(async () => {
-      const progress = await window.electron.downloadProgress();
-      setProgress(progress);
-    }, 1000);
+    window.fileTransfer.startFileReceiver();
 
     return () => {
-      clearInterval(interval);
-      window.electron.stopServer();
-      window.electron.stopPublishing();
-      window.electron.offDownloadFinish();
+      window.deviceDiscovery.stopBroadcast();
+      window.fileTransfer.stopFileReceiver();
     };
   }, []);
 

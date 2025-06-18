@@ -1,26 +1,20 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "path";
+import os from "os";
 import { isDev } from "./util.js";
 import { getPreloadPath } from "./pathresolver.js";
-import express from "express";
-import Bonjour from "bonjour";
-import os from "os";
-import router, { progress, isDownloading } from "./router.js";
-import cors from "cors";
+import { Bonjour } from "bonjour-service";
+import net from "net";
+import startFileReceiver from "./TCPServer.js";
+import sendFile from "./TCPClient.js";
 
-let bonjourService: Bonjour.Bonjour | null = null;
-const expressApp = express();
+const bonjour = new Bonjour();
 
-expressApp.use(cors());
-expressApp.use(express.json());
-expressApp.use(router);
+let browser: ReturnType<typeof bonjour.find> | null = null;
+let publishedService: ReturnType<typeof bonjour.publish> | null = null;
+let fileReceiverServer: net.Server | null = null;
 
-let isServerRunning = false;
-let server: import("http").Server | null = null;
 export let mainWindow: BrowserWindow | null = null;
-
-const expressPort = 3131;
-let devices: Device[] = [];
 
 app.on("ready", () => {
   mainWindow = new BrowserWindow({
@@ -46,79 +40,82 @@ app.on("ready", () => {
   });
 });
 
-ipcMain.on("server-start", () => {
-  if (!isServerRunning) {
-    server = expressApp.listen(expressPort, () => {
-      isServerRunning = true;
-    });
-  }
-});
+ipcMain.on("start-discovery", () => {
+  if (browser) return;
 
-ipcMain.on("server-stop", () => {
-  if (isServerRunning) {
-    server?.close();
-    isServerRunning = false;
-  }
-});
+  browser = bonjour.find({ type: "filetransfer" });
 
-ipcMain.handle("server-status", () => {
-  return isServerRunning;
-});
-
-ipcMain.on("start-publishing", () => {
-  if (!bonjourService) {
-    bonjourService = Bonjour();
-  }
-
-  bonjourService.unpublishAll(() => {
-    bonjourService!.publish({
-      name: os.hostname(),
-      type: "filetransfer",
-      port: 3132,
+  browser.on("up", (service) => {
+    mainWindow?.webContents.send("device-found", {
+      event: "up",
+      name: service.name,
+      host: service.host,
+      port: service.port,
+      addresses: service.addresses,
     });
   });
-});
 
-ipcMain.on("stop-publishing", () => {
-  if (bonjourService) {
-    bonjourService.unpublishAll(() => {
-      bonjourService?.destroy();
-      bonjourService = null;
+  browser.on("down", (service) => {
+    mainWindow?.webContents.send("device-found", {
+      event: "down",
+      name: service.name,
+      host: service.host,
+      port: service.port,
+      addresses: service.addresses,
     });
-  }
-});
-
-ipcMain.handle("download-progress", () => {
-  if (isDownloading) {
-    return progress;
-  }
-  return null;
-});
-
-ipcMain.handle("get-devices", async () => {
-  devices = [];
-
-  await new Promise<void>((resolve) => {
-    if (!bonjourService) {
-      bonjourService = Bonjour();
-    }
-
-    const browser = bonjourService.find({ type: "filetransfer" });
-
-    browser.on("up", (service) => {
-      devices.push({
-        name: service.name || service.host,
-        address: service.referer.address,
-        bonjourPort: service.port,
-        expressPort: expressPort,
-      });
-    });
-
-    setTimeout(() => {
-      browser.stop();
-      resolve();
-    }, 2000);
   });
 
-  return devices;
+  browser.start();
+});
+
+ipcMain.handle("start-broadcast", () => {
+  if (publishedService) return;
+  publishedService = bonjour.publish({
+    port: 3132,
+    name: `${os.hostname()}`,
+    type: "filetransfer",
+  });
+  if (typeof publishedService?.start === "function") {
+    publishedService.start();
+  }
+});
+
+ipcMain.on("stop-discovery", () => {
+  browser?.stop();
+  browser = null;
+});
+
+ipcMain.handle("stop-broadcast", () => {
+  if (typeof publishedService?.stop === "function") {
+    publishedService.stop();
+  }
+  publishedService = null;
+});
+
+ipcMain.handle("start-file-receiver", () => {
+  if (!fileReceiverServer) {
+    fileReceiverServer = startFileReceiver();
+  }
+});
+
+ipcMain.handle("stop-file-receiver", () => {
+  if (fileReceiverServer) {
+    fileReceiverServer.close();
+    fileReceiverServer = null;
+  }
+});
+
+ipcMain.handle("send-file", (_event, { ip, port, filePath }) => {
+  return sendFile(ip, port, filePath);
+});
+
+ipcMain.handle("dialog:openFile", async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ["openFile"],
+  });
+  if (canceled) {
+    return null;
+  } else {
+    return filePaths[0];
+  }
 });

@@ -1,24 +1,37 @@
 interface Device {
+  event: "up" | "down";
   name: string;
-  address: string;
-  bonjourPort: number;
-  expressPort: number;
+  host: string;
+  port: number;
+  addresses: string[];
+}
+
+interface SendFileArgs {
+  ip: string;
+  port: number;
+  filePath: string;
+}
+
+interface DeviceDiscoveryAPI {
+  start: () => void;
+  stop: () => void;
+  onDeviceFound: (callback: (device: Device) => void) => () => void;
+  startBroadcast: () => void;
+  stopBroadcast: () => void;
+}
+
+interface FileTransferAPI {
+  startFileReceiver: () => Promise<void>;
+  stopFileReceiver: () => Promise<void>;
+  sendFile: (args: SendFileArgs) => Promise<void>;
+}
+
+interface ElectronAPI {
+  openFileDialog: () => Promise<string | null>;
 }
 
 interface Window {
-  electron: {
-    startServer: () => void;
-    stopServer: () => void;
-    getServerStatus: () => Promise<boolean>;
-    getDevices: () => Promise<Device[]>;
-    startPublishing: () => void;
-    stopPublishing: () => void;
-    downloadProgress: () => Promise<number | null>;
-    onDownloadFinish: (callback: (fileName: string) => void) => void;
-    offDownloadFinish: () => void;
-    removeListener: (
-      event: string,
-      listener: (...args: unknown[]) => void
-    ) => void;
-  };
+  deviceDiscovery: DeviceDiscoveryAPI;
+  fileTransfer: FileTransferAPI;
+  electronApi: ElectronAPI;
 }
