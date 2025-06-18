@@ -11,7 +11,7 @@ function ReceivePage() {
     window.fileTransfer.startFileReceiver();
 
     const removeProgress = window.fileTransfer.onReceiveFileProgress((p) => {
-      setProgress(Number(p.toFixed(1)));
+      setProgress(Math.floor(p));
     });
     const removeComplete = window.fileTransfer.onReceiveFileComplete(() => {
       window.electronApi.showMessageDialog({
