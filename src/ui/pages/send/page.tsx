@@ -7,7 +7,8 @@ function SendPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [filePath, setFilePath] = useState<string | null>(null);
-  const [progress] = useState<number | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [sending, setSending] = useState(false);
 
   const handleSelectFile = async () => {
     const path = await window.electronApi.openFileDialog();
@@ -17,6 +18,13 @@ function SendPage() {
   const handleSendFile = async () => {
     if (!selectedDevice || !filePath) return;
 
+    setSending(true);
+    setProgress(0);
+
+    const removeListener = window.fileTransfer.onSendFileProgress((p) => {
+      setProgress(p);
+    });
+
     try {
       await window.fileTransfer.sendFile({
         ip: selectedDevice.addresses[0],
@@ -24,9 +32,17 @@ function SendPage() {
         filePath,
       });
 
-      console.log("File sent successfully");
+      await window.electronApi.showMessageDialog({
+        title: "Success",
+        message: "File has been sent successfully!",
+      });
     } catch (err) {
       console.error(err);
+    } finally {
+      removeListener();
+      setSending(false);
+      setProgress(null);
+      setFilePath(null);
     }
   };
 
@@ -71,11 +87,11 @@ function SendPage() {
         onClick={() => navigate("/")}
       />
 
-      {progress === null && (
+      {sending === false && (
         <h1 className="text-2xl font-semibold mt-6 mb-2">Device List</h1>
       )}
 
-      {progress === null && (
+      {sending === false && (
         <div className="w-80 h-54 border border-slate-600 rounded-lg p-2 overflow-y-auto">
           {devices.length > 0 ? (
             devices.map((device) => (
@@ -105,15 +121,13 @@ function SendPage() {
         </div>
       )}
 
-      {progress === null && (
+      {sending === false && (
         <div className="flex items-center gap-x-5 mt-4">
           <button
             className="rounded-lg bg-slate-700 border border-slate-600 px-4 py-2 text-white text-center cursor-pointer transition-all hover:bg-slate-600 active:bg-slate-500"
             onClick={handleSelectFile}
           >
-            {filePath
-              ? `Selected: ${filePath.split(/(\\|\/)/g).pop()}`
-              : "Select File"}
+            {filePath ? `File Selected` : "Select File"}
           </button>
 
           <button
@@ -130,7 +144,7 @@ function SendPage() {
         </div>
       )}
 
-      {progress !== null && (
+      {sending === true && (
         <div className="w-80 mt-4 bg-gray-700 rounded-lg h-4 overflow-hidden">
           <div
             className="bg-green-500 h-4 transition-all"

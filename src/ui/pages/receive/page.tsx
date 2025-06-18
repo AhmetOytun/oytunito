@@ -4,16 +4,36 @@ import { useEffect, useState } from "react";
 
 function ReceivePage() {
   const navigate = useNavigate();
-  const [progress] = useState<number | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
 
   useEffect(() => {
     window.deviceDiscovery.startBroadcast();
-
     window.fileTransfer.startFileReceiver();
+
+    const removeProgress = window.fileTransfer.onReceiveFileProgress((p) => {
+      setProgress(Number(p.toFixed(1)));
+    });
+    const removeComplete = window.fileTransfer.onReceiveFileComplete(() => {
+      window.electronApi.showMessageDialog({
+        title: "Success",
+        message: "File has been received successfully!",
+      });
+      setProgress(null);
+    });
+    const removeError = window.fileTransfer.onReceiveFileError((msg) => {
+      window.electronApi.showMessageDialog({
+        title: "Error",
+        message: `Failed to receive file: ${msg}`,
+      });
+      setProgress(null);
+    });
 
     return () => {
       window.deviceDiscovery.stopBroadcast();
       window.fileTransfer.stopFileReceiver();
+      removeProgress();
+      removeComplete();
+      removeError();
     };
   }, []);
 

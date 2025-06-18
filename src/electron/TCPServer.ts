@@ -5,7 +5,7 @@ import { app } from "electron";
 
 const FILE_RECEIVE_PORT = 3132;
 
-function startFileReceiver() {
+function startFileReceiver(eventSender: Electron.WebContents) {
   const server = net.createServer((socket) => {
     console.log("Client connected:", socket.remoteAddress);
 
@@ -34,6 +34,12 @@ function startFileReceiver() {
           if (remaining.length > 0) {
             fileStream.write(remaining);
             receivedBytes += remaining.length;
+
+            // Progress update
+            eventSender.send(
+              "receive-file-progress",
+              (receivedBytes / fileSize) * 100
+            );
           }
 
           headerParsed = true;
@@ -44,10 +50,17 @@ function startFileReceiver() {
           fileStream.write(chunk);
           receivedBytes += chunk.length;
 
+          // Progress update
+          eventSender.send(
+            "receive-file-progress",
+            (receivedBytes / fileSize) * 100
+          );
+
           if (receivedBytes >= fileSize) {
             console.log("File received fully");
             fileStream.end();
             socket.end();
+            eventSender.send("receive-file-complete");
           }
         }
       }
@@ -61,6 +74,7 @@ function startFileReceiver() {
     socket.on("error", (err) => {
       console.error("Socket error:", err);
       if (fileStream && !fileStream.closed) fileStream.end();
+      eventSender.send("receive-file-error", err.message);
     });
   });
 

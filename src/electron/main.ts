@@ -92,10 +92,11 @@ ipcMain.handle("stop-broadcast", () => {
   publishedService = null;
 });
 
-ipcMain.handle("start-file-receiver", () => {
+ipcMain.handle("start-file-receiver", (event) => {
   if (!fileReceiverServer) {
-    fileReceiverServer = startFileReceiver();
+    fileReceiverServer = startFileReceiver(event.sender);
   }
+  return true;
 });
 
 ipcMain.handle("stop-file-receiver", () => {
@@ -105,8 +106,10 @@ ipcMain.handle("stop-file-receiver", () => {
   }
 });
 
-ipcMain.handle("send-file", (_event, { ip, port, filePath }) => {
-  return sendFile(ip, port, filePath);
+ipcMain.handle("send-file", (event, { ip, port, filePath }) => {
+  return sendFile(ip, port, filePath, (progress) => {
+    event.sender.send("send-file-progress", progress);
+  });
 });
 
 ipcMain.handle("dialog:openFile", async () => {
@@ -118,4 +121,12 @@ ipcMain.handle("dialog:openFile", async () => {
   } else {
     return filePaths[0];
   }
+});
+
+ipcMain.handle("dialog:showMessage", async (_event, { title, message }) => {
+  await dialog.showMessageBox({
+    type: "info",
+    title,
+    message,
+  });
 });

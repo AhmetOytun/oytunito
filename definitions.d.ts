@@ -24,10 +24,18 @@ interface FileTransferAPI {
   startFileReceiver: () => Promise<void>;
   stopFileReceiver: () => Promise<void>;
   sendFile: (args: SendFileArgs) => Promise<void>;
+  onSendFileProgress: (callback: (progress: number) => void) => () => void;
+  onReceiveFileProgress: (callback: (progress: number) => void) => () => void;
+  onReceiveFileComplete: (callback: () => void) => () => void;
+  onReceiveFileError: (callback: (error: Error) => void) => () => void;
 }
 
 interface ElectronAPI {
   openFileDialog: () => Promise<string | null>;
+  showMessageDialog: (args: {
+    title: string;
+    message: string;
+  }) => Promise<void>;
 }
 
 interface Window {
