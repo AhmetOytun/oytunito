@@ -40,6 +40,25 @@ app.on("ready", () => {
   });
 });
 
+app.on("before-quit", () => {
+  console.log("App quitting: stopping Bonjour services...");
+
+  if (publishedService && typeof publishedService.stop === "function") {
+    publishedService.stop();
+    publishedService = null;
+  }
+
+  if (browser) {
+    browser.stop();
+    browser = null;
+  }
+
+  if (fileReceiverServer) {
+    fileReceiverServer.close();
+    fileReceiverServer = null;
+  }
+});
+
 ipcMain.on("start-discovery", () => {
   if (browser) return;
 
